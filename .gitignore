@@ -1,0 +1,63 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+env/
+ENV/
+*.env
+
+# Django specific
+*.log
+db.sqlite3
+media/
+staticfiles/
+local_settings.py
+
+# OpenCV temporary files
+*.avi
+*.mp4
+*.jpg
+*.png
+*.npy
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VSCode settings
+.vscode/
+
+# PyCharm settings
+.idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Docker artifacts
+*.pid
+*.pid.lock
+docker-compose.override.yml
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Coverage reports
+htmlcov/
+.coverage
+.tox/
+.nosetests.xml
+coverage.xml
+*.cover
+
+# Test outputs
+test_output/
+
+*.pickle

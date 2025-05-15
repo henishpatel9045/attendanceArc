@@ -1,0 +1,37 @@
+<!-- core/templates/core/attendance.html -->
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Live Attendance (Today)</h2>
+  <table class="table table-striped">
+    <thead><tr><th>Time</th><th>Person</th><th>Event</th></tr></thead>
+    <tbody>
+      {% for att in live_attendances %}
+      <tr>
+        <td>{{ att.timestamp|time:"H:i:s" }}</td>
+        <td>{{ att.person.name }}</td>
+        <td>{{ att.event.title }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">No live attendance yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 class="mt-5">Attendance History</h2>
+  <table class="table table-bordered">
+    <thead><tr><th>Date & Time</th><th>Person</th><th>Event</th></tr></thead>
+    <tbody>
+      {% for att in past_attendances %}
+      <tr>
+        <td>{{ att.timestamp }}</td>
+        <td>{{ att.person.name }}</td>
+        <td>{{ att.event.title }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">No historical records.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

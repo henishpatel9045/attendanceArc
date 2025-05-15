@@ -1,0 +1,14 @@
+Django
+djangorestframework
+numpy
+onnx
+onnxruntime-gpu
+scikit-learn
+scikit-image
+albumentations
+tqdm
+requests
+Pillow
+matplotlib
+insightface
+gunicorn

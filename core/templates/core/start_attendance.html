@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Attendance: {{ event.title }} ({{ event.date }})</h2>
+
+  <!-- Camera selection and controls -->
+  <div class="mb-3">
+    <label for="cameraSelect" class="form-label">Select Camera Source:</label>
+    <select id="cameraSelect" class="form-select">
+      <option value="" disabled selected>Loading devices…</option>
+    </select>
+    <div class="mt-2">
+      <button id="startBtn" class="btn btn-success">Start Attendance</button>
+      <button id="stopBtn" class="btn btn-danger" disabled>Stop Attendance</button>
+    </div>
+  </div>
+
+  <!-- Streams: raw video & annotated -->
+  <div class="d-flex gap-3">
+    <video id="video" width="320" height="240" autoplay muted class="border"></video>
+    <img id="annotated" width="320" height="240" alt="Annotated stream" class="border" />
+  </div>
+
+  <div id="log" class="mt-3"></div>
+</div>
+
+<script>
+(async () => {
+  const cameraSelect = document.getElementById('cameraSelect');
+  const startBtn     = document.getElementById('startBtn');
+  const stopBtn      = document.getElementById('stopBtn');
+  const video        = document.getElementById('video');
+  const annotated    = document.getElementById('annotated');
+  const log          = document.getElementById('log');
+  let stream         = null;
+  let intervalId     = null;
+
+  // 1. Enumerate video input devices
+  async function loadDevices() {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    if (!devices || devices.length === 0) {
+      return alert('No video input devices found.');
+    }
+    console.log('Devices:', devices);
+    const cams = devices.filter(d => d.kind === 'videoinput');
+    cameraSelect.innerHTML = cams
+      .map((cam, i) => `<option value="${cam.deviceId}">${cam.label || 'Camera ' + (i+1)}</option>`)
+      .join('');
+  }
+
+  // 2. Start attendance: get camera and begin polling
+  async function startAttendance() {
+    // Prevent double-start
+    if (intervalId) return;
+    const deviceId = cameraSelect.value;
+    if (!deviceId) return alert('Please select a camera.');
+
+    // Start the camera stream
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: deviceId } }
+    });
+    video.srcObject = stream;
+
+    // Disable Start, enable Stop
+    startBtn.disabled = true;
+    stopBtn.disabled  = false;
+    cameraSelect.disabled = true;
+
+    // Begin polling every 500ms
+    intervalId = setInterval(async () => {
+      if (video.readyState !== 4) return;
+      const canvas = document.createElement('canvas');
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      const data = canvas.toDataURL('image/jpeg');
+
+      try {
+        const resp = await fetch("{% url 'stream_frame' event.pk %}", {
+          method: 'POST',
+          headers: {'X-CSRFToken': '{{ csrf_token }}'},
+          body: new URLSearchParams({ frame: data })
+        });
+        const json = await resp.json();
+        if (json.status === 'ok') {
+          annotated.src = json.annotated_frame;
+          json.marked.forEach(name => {
+            const p = document.createElement('p');
+            p.textContent = `${new Date(json.timestamp).toLocaleTimeString()}: Marked ${name}`;
+            log.prepend(p);
+          });
+        } else {
+          console.warn('Stream error:', json.message);
+        }
+      } catch (e) {
+        console.error('Fetch error:', e);
+      }
+    }, 500);
+  }
+
+  // 3. Stop attendance: clear polling and stop camera
+  function stopAttendance() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+      video.srcObject = null;
+    }
+    // Reset UI
+    startBtn.disabled = false;
+    stopBtn.disabled  = true;
+    cameraSelect.disabled = false;
+  }
+
+  // Initialize device list and button events
+  await loadDevices();
+  startBtn.addEventListener('click', startAttendance);
+  stopBtn.addEventListener('click', stopAttendance);
+})();
+</script>
+{% endblock %}
