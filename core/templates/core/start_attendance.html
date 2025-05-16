@@ -26,6 +26,50 @@
 
 <script>
 (async () => {
+  async function requestCameraAccess() {
+  // Check if the Permissions API is supported
+  console.log('Checking camera permissions...');
+  if (navigator.permissions) {
+    try {
+      // Query the current camera permission status
+      const permissionStatus = await navigator.permissions.query({ name: 'camera' });
+
+      if (permissionStatus.state === 'granted') {
+        // Permission already granted
+        console.log('Camera permission already granted.');
+        return true;
+      } else if (permissionStatus.state === 'prompt') {
+        // Permission not yet granted; request access
+        return await getCameraStream();
+      } else {
+        // Permission denied
+        console.warn('Camera access has been denied.');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error checking camera permission:', err);
+      return false;
+    }
+  } else {
+    // Permissions API not supported; directly request access
+    return await getCameraStream();
+  }
+}
+
+async function getCameraStream() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    console.log('Camera access granted.');
+    // You can now use the stream, e.g., display it in a video element
+    return true;
+  } catch (err) {
+    console.error('Camera access denied or error occurred:', err);
+    return false;
+  }
+}
+
+  await requestCameraAccess();
+
   const cameraSelect = document.getElementById('cameraSelect');
   const startBtn     = document.getElementById('startBtn');
   const stopBtn      = document.getElementById('stopBtn');

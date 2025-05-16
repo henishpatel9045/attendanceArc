@@ -12,3 +12,4 @@ Pillow
 matplotlib
 insightface
 gunicorn
+django-cors-headers

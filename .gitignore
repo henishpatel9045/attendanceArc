@@ -61,3 +61,4 @@ coverage.xml
 test_output/
 
 *.pickle
+insightface_models
